@@ -25,8 +25,9 @@ pub struct Udp {
 }
 
 fn checksum<T: PseudoHeader>(udp_packet: &UdpPacket, ip_packet: &T) -> u16 {
-    let pseudo_header = ip_packet.get_pseudo_header(Some(udp_packet.get_length() as u32));
-    rfc1071_checksum(udp_packet.packet(), Some(&pseudo_header[..]))
+    let mut pseudo_header_buf = ip_packet.get_pseudo_header_buffer();
+    let pseudo_header = ip_packet.get_pseudo_header(&mut pseudo_header_buf, Some(udp_packet.get_length() as usize));
+    rfc1071_checksum(udp_packet.packet(), Some(pseudo_header.packet()))
 }
 
 #[test]

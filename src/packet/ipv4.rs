@@ -69,6 +69,7 @@ pub struct Ipv4PseudoHeader {
 impl<'p> PseudoHeader for Ipv4Packet<'p> {
 
     type PseudoHeaderType = Ipv4PseudoHeaderPacket<'p>;
+    type Buffer = [u8; 12];
     /// Return a PseudoHeader packet out of the packet header.
     ///
     /// The `inner_packet_length` is optional, since in case of UDP, it is taken from the length
@@ -87,6 +88,10 @@ impl<'p> PseudoHeader for Ipv4Packet<'p> {
         }
 
         pseudo_header.to_immutable()
+    }
+
+    fn get_pseudo_header_buffer(&self) -> [u8; 12] {
+        [0; 12]
     }
 }
 

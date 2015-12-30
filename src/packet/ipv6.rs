@@ -65,11 +65,11 @@ pub struct Ipv6 {
 
 pub struct Ipv6HeaderIter<'p> {
     packet: &'p Ipv6Packet<'p>,
-    current_header: Ipv6Packet<'p>,
+    current_header: &'p Ipv6Packet<'p>,
 }
 
 impl<'p> Ipv6Packet<'p> {
-    fn iter(&self) -> Ipv6HeaderIter<'p> {
+    fn iter(&'p self) -> Ipv6HeaderIter<'p> {
         Ipv6HeaderIter {
             packet: self,
             current_header: self
@@ -87,7 +87,7 @@ impl<'p> Iterator for Ipv6HeaderIter<'p> {
             IpNextHeaderProtocols::Ipv6Frag |
             IpNextHeaderProtocols::Ipv6Icmp |
             IpNextHeaderProtocols::Ipv6Opts => {
-                self.current_header = Ipv6Packet::new(self.current_header.payload()).unwrap(); // is it ok to unwrap here?
+                self.current_header = &Ipv6Packet::new(self.current_header.payload()).unwrap(); // is it ok to unwrap here?
                 Some(self.current_header)
             },
             _ => None,
@@ -98,6 +98,7 @@ impl<'p> Iterator for Ipv6HeaderIter<'p> {
 impl<'p> PseudoHeader for Ipv6Packet<'p> {
 
     type PseudoHeaderType = Ipv6PseudoHeaderPacket<'p>;
+    type Buffer = [u8; 40];
 
     fn get_pseudo_header(&self, buffer: &mut [u8], inner_packet_length: Option<usize>) -> Ipv6PseudoHeaderPacket<'p> {
         let mut pseudo_header = MutableIpv6PseudoHeaderPacket::new(&mut buffer).unwrap();
@@ -105,8 +106,9 @@ impl<'p> PseudoHeader for Ipv6Packet<'p> {
         // FIXME: not sure which header I should take for this one...
         pseudo_header.set_destination(self.get_destination());
         // Get the next_level_protocol and inner_packet_length from the last ipv6 header
+        let pseudo_header_iter = self.iter();
         loop {
-            if let Some(header) = self.next() {
+            if let Some(header) = pseudo_header_iter.next() {
                 pseudo_header.set_next_level_protocol(header.get_next_header());
                 pseudo_header.set_inner_packet_length(header.get_payload_length() as u32);
             } else {
@@ -118,6 +120,10 @@ impl<'p> PseudoHeader for Ipv6Packet<'p> {
         } 
 
         pseudo_header.to_immutable();
+    }
+
+    fn get_pseudo_header_buffer(&self) -> [u8; 40] {
+        [0; 40]
     }
 }
 

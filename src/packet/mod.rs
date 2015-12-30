@@ -14,8 +14,12 @@
 pub trait PseudoHeader {
 
     type PseudoHeaderType;
+    type Buffer;
+
     /// Converts IPv4 or IPv6 specific fields to a checksum value
     fn get_pseudo_header(&self, buffer: &mut [u8], inner_packet_length: Option<usize>) -> Self::PseudoHeaderType; 
+    /// Return a pseudo header buffer with the appropriate size
+    fn get_pseudo_header_buffer(&self) -> Self::Buffer;
 }
 
 /// Represents a generic network packet
