@@ -12,8 +12,10 @@
 
 /// Used to help compute checksum value of packet
 pub trait PseudoHeader {
+
+    type PseudoHeaderType;
     /// Converts IPv4 or IPv6 specific fields to a checksum value
-    fn checksum(&self) -> u32;
+    fn get_pseudo_header(&self, buffer: &mut [u8], inner_packet_length: Option<usize>) -> Self::PseudoHeaderType; 
 }
 
 /// Represents a generic network packet
